@@ -20,3 +20,11 @@ reexpose path/to/config.yaml
 ```
 
 ReExpose will make the endpoint available on localhost at port 5000 by default.
+
+## Development
+
+Simply install the dev extra:
+
+```
+pip install .[dev]
+```
