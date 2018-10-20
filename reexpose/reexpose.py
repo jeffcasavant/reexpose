@@ -21,7 +21,7 @@ def load_config(config_file):
     config = safe_load(config_file)
     if 'log_level' in config:
         if not hasattr(logging, config['log_level'].upper()):
-            LOGGER.error('log_level {} was not an attr of logging'.format(config['log_level']))
+            LOGGER.error('log_level %s was not an attr of logging', config['log_level'])
         else:
             LOGGER.setLevel(config['log_level'].upper())
 
@@ -75,8 +75,13 @@ def app_setup(**kwargs):
 
 def main():
 
-    parser = argparse.ArgumentParser(description='ReExpose HTTP basic auth endpoints as unauthenticated ones')
-    parser.add_argument('--config', '-c', type=argparse.FileType('r'), help='Config file')
+    ''' Call setup functions & actually run the app. '''
+
+    parser = argparse.ArgumentParser(
+        description='ReExpose HTTP basic auth endpoints as unauthenticated ones'
+    )
+    parser.add_argument('--config', '-c', type=argparse.FileType('r'), help='Config file',
+                        required=True)
     parser.add_argument('--port', '-p', type=int, help='Port to listen on', default=5000)
     args = parser.parse_args()
 
