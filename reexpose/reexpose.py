@@ -2,8 +2,6 @@
 
 #! /usr/bin/env python3
 
-import pdb
-
 import argparse
 import logging
 
@@ -12,12 +10,23 @@ from flask import Flask, Response
 from gevent.pywsgi import WSGIServer
 from yaml import safe_load
 
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
+LOGGER.addHandler(logging.StreamHandler())
+
 def load_config(config_file):
 
     ''' Load config from open file handle '''
 
     config = safe_load(config_file)
-    logging.info('Sites loaded: %d', len(config))
+    if 'log_level' in config:
+        if not hasattr(logging, config['log_level'].upper()):
+            LOGGER.error('log_level {} was not an attr of logging'.format(config['log_level']))
+        else:
+            LOGGER.setLevel(config['log_level'].upper())
+
+    LOGGER.info('Sites loaded: %d', len(config['sites']))
+
     return config
 
 def app_setup(**kwargs):
@@ -33,19 +42,27 @@ def app_setup(**kwargs):
 
     config = load_config(kwargs['config'])
 
-    @app.route('/sites/<site_name>')
-    def render_site(site_name):
+    @app.route('/sites/<site_name>', defaults={'path': ''})
+    @app.route('/sites/<site_name>/<path:path>')
+    def render_site(site_name, path):
+        # pylint: disable=unused-variable
         site = config['sites'].get(site_name, None)
 
         if not site:
-            logging.warn('Request for nonexistent site %s', site_name)
+            LOGGER.warning('Request for nonexistent site %s', site_name)
             return 'Site not found: {}'.format(site_name), 404
 
         url = site['url']
+        if path:
+            url += '/{}'.format(path)
+
         creds = (site['creds']['user'],
                  site['creds']['pass'])
 
         resp = requests.get(url, auth=creds)
+
+        if resp.status_code == 404:
+            return '', resp.status_code
 
         flask_resp = Response(resp.text)
         flask_resp.headers = {**flask_resp.headers,
@@ -53,11 +70,10 @@ def app_setup(**kwargs):
 
         return flask_resp, resp.status_code
 
-    logging.info('Setup complete')
+    LOGGER.info('Setup complete')
     return app
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(description='ReExpose HTTP basic auth endpoints as unauthenticated ones')
     parser.add_argument('--config', '-c', type=argparse.FileType('r'), help='Config file')
@@ -65,5 +81,5 @@ def main():
     args = parser.parse_args()
 
     app = app_setup(**vars(args))
-    logging.info('Starting app')
+    LOGGER.info('Starting app')
     WSGIServer(('127.0.0.1', args.port), app).serve_forever()

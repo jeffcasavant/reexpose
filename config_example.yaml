@@ -1,3 +1,5 @@
+---
+
 sites:
   bhp:
     name: The British History Podcast
@@ -5,3 +7,5 @@ sites:
     creds:
       user: my-user
       pass: hunter2
+
+log_level: warn
