@@ -1,7 +1,7 @@
 sites:
-  - name: The British History Podcast
-    endpoint: bhp
+  bhp:
+    name: The British History Podcast
     url: https://www.thebritishhistorypodcast.com/feed/members
     creds:
       user: my-user
-      pass: my-pass
+      pass: hunter2

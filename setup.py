@@ -12,5 +12,10 @@ setup(
         'requests',
         'pyyaml'
     ],
+    extras_require={
+        'dev': [
+            'pylint'
+        ]
+    },
     scripts=['bin/reexpose']
 )

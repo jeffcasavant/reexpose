@@ -1,49 +1,57 @@
+''' ReExpose HTTP basic auth endpoints as unauthenticated ones on localhost '''
+
 #! /usr/bin/env python3
 
+import pdb
+
+import argparse
 import logging
-import os
-import sys
 
 import requests
 from flask import Flask, Response
 from gevent.pywsgi import WSGIServer
 from yaml import safe_load
 
-def load_config():
+def load_config(config_file):
 
-    config_file = 'config.yaml'
-    if len(sys.argv) > 1:
-        config_file = os.path.join(os.getcwd(),
-                                   sys.argv[1])
+    ''' Load config from open file handle '''
 
-    logging.info('Loading config from %s', config_file)
-    with open(config_file) as config:
-        config = safe_load(config)
-        logging.info('Loaded %d sites', len(config))
-        return config
+    config = safe_load(config_file)
+    logging.info('Sites loaded: %d', len(config))
+    return config
 
-def app_setup():
+def app_setup(**kwargs):
+
+    ''' Create endpoints based on config file. '''
+
     app = Flask(__name__)
 
     @app.route('/')
     def info():
+        # pylint: disable=unused-variable
         return 'ReExpose'
 
-    config = load_config()
+    config = load_config(kwargs['config'])
 
-    for site in config['sites']:
-        logging.info('Setting up endpoint for %s', site['name'])
-        @app.route('/{}'.format(site.get('endpoint', site['name'])))
-        def render_site():
-            resp = requests.get(site['url'],
-                                auth=(site['creds']['user'],
-                                      site['creds']['pass']))
+    @app.route('/sites/<site_name>')
+    def render_site(site_name):
+        site = config['sites'].get(site_name, None)
 
-            flask_resp = Response(resp.text)
-            flask_resp.headers = {**flask_resp.headers,
-                                  **resp.headers}
+        if not site:
+            logging.warn('Request for nonexistent site %s', site_name)
+            return 'Site not found: {}'.format(site_name), 404
 
-            return flask_resp, resp.status_code
+        url = site['url']
+        creds = (site['creds']['user'],
+                 site['creds']['pass'])
+
+        resp = requests.get(url, auth=creds)
+
+        flask_resp = Response(resp.text)
+        flask_resp.headers = {**flask_resp.headers,
+                              **resp.headers}
+
+        return flask_resp, resp.status_code
 
     logging.info('Setup complete')
     return app
@@ -51,6 +59,11 @@ def app_setup():
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
-    app = app_setup()
+    parser = argparse.ArgumentParser(description='ReExpose HTTP basic auth endpoints as unauthenticated ones')
+    parser.add_argument('--config', '-c', type=argparse.FileType('r'), help='Config file')
+    parser.add_argument('--port', '-p', type=int, help='Port to listen on', default=5000)
+    args = parser.parse_args()
+
+    app = app_setup(**vars(args))
     logging.info('Starting app')
-    WSGIServer(('127.0.0.1', 5000), app).serve_forever()
+    WSGIServer(('127.0.0.1', args.port), app).serve_forever()
