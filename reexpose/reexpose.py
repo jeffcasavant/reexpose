@@ -6,6 +6,7 @@ import argparse
 import logging
 
 import requests
+from cachetools import TTLCache
 from flask import Flask, Response
 from gevent.pywsgi import WSGIServer
 from yaml import safe_load
@@ -42,6 +43,9 @@ def app_setup(**kwargs):
 
     config = load_config(kwargs['config'])
 
+    cache = TTLCache(maxsize=len(config['sites']),
+                     ttl=config.get('cache_ttl_secs', 30))
+
     @app.route('/sites/<site_name>', defaults={'path': ''})
     @app.route('/sites/<site_name>/<path:path>')
     def render_site(site_name, path):
@@ -59,7 +63,10 @@ def app_setup(**kwargs):
         creds = (site['creds']['user'],
                  site['creds']['pass'])
 
-        resp = requests.get(url, auth=creds)
+        resp = cache.get(url, None)
+        if not resp:
+            resp = requests.get(url, auth=creds)
+            cache[url] = resp
 
         if resp.status_code == 404:
             return '', resp.status_code

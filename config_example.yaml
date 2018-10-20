@@ -9,3 +9,4 @@ sites:
       pass: hunter2
 
 log_level: warn
+cache_ttl: 30
