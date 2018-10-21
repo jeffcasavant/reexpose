@@ -18,7 +18,8 @@ setup(
     ],
     extras_require={
         'dev': [
-            'pylint'
+            'pylint',
+            'twine'
         ]
     },
     packages=['reexpose',],

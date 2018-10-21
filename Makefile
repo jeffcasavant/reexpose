@@ -9,14 +9,17 @@ install:
 	pip install .
 
 install-dev:
-	pip install.[dev]
+	pip install .[dev]
 
 packages: wheel source
 
-wheel:
+wheel: install-dev
 	mkdir -p build
-	mkdir -p dist/wheel
-	pip wheel --wheel-dir dist/wheel --build build .
+	mkdir -p dist
+	pip wheel --wheel-dir dist --build build .
 
-source:
+source: install-dev
 	python setup.py sdist
+
+upload: install-dev packages
+	twine upload dist/ReExpose*
