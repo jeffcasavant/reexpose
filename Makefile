@@ -21,5 +21,9 @@ wheel: install-dev
 source: install-dev
 	python setup.py sdist
 
-upload: install-dev packages
+upload: clean install-dev packages
 	twine upload dist/ReExpose*
+
+clean:
+	rm -rf dist
+	rm -rf build
