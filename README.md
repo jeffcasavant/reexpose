@@ -7,9 +7,7 @@ Built for Plex Podcasts to connect to premium podcast feeds.
 ## Installation & running
 
 ```
-git clone https://github.com/jeffcasavant/reexpose.git
-cd reexpose
-pip install .
+pip install reexpose
 ```
 
 This will put ReExpose on your path.  Then, copy `config_example.yaml` to
@@ -26,5 +24,7 @@ ReExpose will make the endpoint available on localhost at port 5000 by default.
 Simply install the dev extra:
 
 ```
+git clone https://github.com/jeffcasavant/reexpose.git
+cd reexpose
 pip install .[dev]
 ```
