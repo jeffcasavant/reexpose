@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='ReExpose',
-    version='0.1.0',
+    version='0.1.1',
     author='Jeff Casavant',
     author_email='jeff.casavant@gmail.com',
     description='ReExpose HTTP basic auth endpoints on localhost as unauthenticated endpoints',
